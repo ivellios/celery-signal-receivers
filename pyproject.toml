@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "celery-signal-receivers"
+version = "0.1.0"
+description = "Extension for the Django signal receivers to process them asynchronously as the Celery tasks."
+authors = ["Janusz Kamieński <200957+ivellios@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/ivellios/celery-signal-receivers"
+repository = "https://github.com/ivellios/celery-signal-receivers"
+keywords = ["django", "signals", "celery"]
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Celery",
+]
+packages = [
+    { include = "celery_signals", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Django = "^4.0"
+celery = "^5.3"
+django-stubs = "^4.2.4"
+pytest-cov = "^4.1.0"
+setuptools = "^68.2.2"
+django-unified-signals = "^0.1.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+botocore = "^1.31.49"
+boto3 = "^1.28.49"
+ipython = "^8.14.0"
+ipdb = "^0.13.13"
+liccheck = "^0.9.1"
+pytest-django = "^4.5.2"
+pytest-watch = "^4.2.0"
+safety = "^2.3.5"
+checkov = "^2.4.41"
+
+[tool.mypy]
+plugins = [
+    "mypy_django_plugin.main"
+]
+
+[tool.django-stubs]
+django_settings_module = "tests.testapp.settings"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
