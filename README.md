@@ -84,3 +84,8 @@ As in `@receiver` decorator you can also pass a list of signals that the receive
 ```python
 @receiver_task([profile_updated_signal, profile_deleted_signal])
 ```
+
+# Limitations
+
+For now this package does not support multiple signals passed to the `@receiver_task` decorator.
+This may be added in the future. 

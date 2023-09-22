@@ -80,21 +80,3 @@ def test_receivers_import_with_celery_app_defined_incorrectly():
         get_celery_app()
 
     settings.EVENT_SIGNALS_CELERY_APP = OLD_EVENT_SIGNALS_CELERY_APP
-
-
-@override_settings(
-    CELERY_TASK_ALWAYS_EAGER=True, EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app"
-)
-def test_handling_multiple_signals():
-    signal_1 = UnifiedSignal(DataMock)
-    signal_2 = UnifiedSignal(DataMock)
-
-    @receiver_task([signal_1, signal_2], weak=False)
-    def handle_signal(sender, message, **kwargs):
-        if sender == "aaa":
-            assert message.field == 10
-        if sender == "bbb":
-            assert message.field == 5
-
-    signal_1.send("aaa", DataMock(field=10))
-    signal_2.send("bbb", DataMock(field=5))
