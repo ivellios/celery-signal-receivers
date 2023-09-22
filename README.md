@@ -87,5 +87,6 @@ As in `@receiver` decorator you can also pass a list of signals that the receive
 
 # Limitations
 
-For now this package does not support multiple signals passed to the `@receiver_task` decorator.
+For now this package does not support multiple signals passed to the `@receiver_task` decorator. 
+You should create separate receivers for each signal.
 This may be added in the future. 
