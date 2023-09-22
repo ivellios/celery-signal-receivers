@@ -71,19 +71,18 @@ You can also pass the celery options to the task using the param in the decorato
 
 ```python
 @receiver_task(profile_updated_signal, celery_task_options={'queue': 'profile-updated-queue'})
+def foo(sender, message: ProfileMessage, **kwargs):
+    ...
 ```
 
 The decorator also accepts all other keyword arguments as regular `django.dispatch.receiver` decorator (ie. same as [Signal.connect](https://docs.djangoproject.com/en/4.2/topics/signals/#django.dispatch.Signal.connect). For example you can set the `dispatch_uid` to avoid registering the same receiver multiple times.
 
 ```python
 @receiver_task(profile_updated_signal, dispatch_uid='profile_updated')
+def foo(sender, message: ProfileMessage, **kwargs):
+    ...
 ```
 
-As in `@receiver` decorator you can also pass a list of signals that the receiver should be connected to:
-
-```python
-@receiver_task([profile_updated_signal, profile_deleted_signal])
-```
 
 # Limitations
 
