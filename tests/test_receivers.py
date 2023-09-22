@@ -27,7 +27,7 @@ def test_celery_signal_receiver():
 
     @receiver_task(signal, weak=False)
     def handle_signal(**kwargs):
-        assert True
+        ...
 
     signal.send(SenderMock(), DataMock(field=10))
 
