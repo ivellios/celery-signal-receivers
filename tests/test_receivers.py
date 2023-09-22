@@ -19,10 +19,13 @@ class SenderMock:
     pass
 
 
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True, EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app"
+)
 def test_celery_signal_receiver():
     signal = UnifiedSignal(DataMock)
 
-    @receiver_task(signal)
+    @receiver_task(signal, weak=False)
     def handle_signal(**kwargs):
         assert True
 
@@ -37,7 +40,7 @@ def test_celery_signal_receiver_creates_celery_task():
 
     with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
 
-        @receiver_task(signal)
+        @receiver_task(signal, weak=False)
         def handle_signal(**kwargs):
             ...
 
