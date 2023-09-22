@@ -5,7 +5,6 @@ from functools import wraps
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.dispatch import receiver
 from unified_signals import UnifiedSignal
 
 
@@ -34,7 +33,7 @@ app = get_celery_app()
 
 
 def receiver_task(
-    signal: UnifiedSignal,  # TODO: also accept multiple signals as original Signal does
+    signal: typing.Union[UnifiedSignal, typing.Iterable[UnifiedSignal]],
     celery_task_options: typing.Optional[typing.Dict] = None,
     **options,
 ):
@@ -60,7 +59,11 @@ def receiver_task(
             message_data = json.dumps(message.__dict__) if message else "{}"
             return consumer.delay(message_data, *_args, **_kwargs)
 
-        signal.connect(producer, **options)
+        if isinstance(signal, (list, tuple)):
+            for s in signal:
+                s.connect(producer, **options)
+        else:
+            signal.connect(producer, **options)
 
         return func
 

@@ -57,10 +57,30 @@ def handle_profile_updated(sender, message: ProfileMessage, **kwargs):
     ...
 ```
 
-The above task will be executed by celery worker for the `handle_profile_updated` function. This function works as any other celery task, so you can route it to specific queue, set the priority, etc.
+The above task will be executed by celery worker for the `handle_profile_updated` task. This function works as any other celery task, so you can route it to specific queue, set the priority, etc.
 
 ```python
 app.conf.task_routes = {
     'handle_profile_updated': {'queue': 'profile-updated-queue'},
 }
+```
+
+# Options
+
+You can also pass the celery options to the task using the param in the decorator:
+
+```python
+@receiver_task(profile_updated_signal, celery_task_options={'queue': 'profile-updated-queue'})
+```
+
+The decorator also accepts all other keyword arguments as regular `django.dispatch.receiver` decorator (ie. same as [Signal.connect](https://docs.djangoproject.com/en/4.2/topics/signals/#django.dispatch.Signal.connect). For example you can set the `dispatch_uid` to avoid registering the same receiver multiple times.
+
+```python
+@receiver_task(profile_updated_signal, dispatch_uid='profile_updated')
+```
+
+As in `@receiver` decorator you can also pass a list of signals that the receiver should be connected to:
+
+```python
+@receiver_task([profile_updated_signal, profile_deleted_signal])
 ```
