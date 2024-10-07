@@ -26,8 +26,7 @@ def test_celery_signal_receiver():
     signal = UnifiedSignal(DataMock)
 
     @receiver_task(signal, weak=False)
-    def handle_signal(**kwargs):
-        ...
+    def handle_signal(**kwargs): ...
 
     signal.send(SenderMock(), DataMock(field=10))
 
@@ -41,8 +40,7 @@ def test_celery_signal_receiver_creates_celery_task():
     with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
 
         @receiver_task(signal, weak=False)
-        def handle_signal(**kwargs):
-            ...
+        def handle_signal(**kwargs): ...
 
         signal.send(SenderMock(), DataMock(field=10))
         task_mock.assert_called_once()
