@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "celery-signal-receivers"
-version = "0.2.0"
+version = "0.2.1"
 description = "Extension for the Django signal receivers to process them asynchronously as the Celery tasks."
 authors = ["Janusz Kamieński <200957+ivellios@users.noreply.github.com>"]
 license = "MIT"
@@ -27,14 +27,11 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-
 python = "^3.9"
-Django = "^4.0,<6"
+Django = ">=4.0,<6"
 celery = "^5.3"
-django-stubs = "^4.2.4,<6"
-pytest-cov = "^4.1.0"
 setuptools = "^75.1.0"
-django-unified-signals = "^0.2.0"
+django-unified-signals = "^0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
@@ -46,6 +43,8 @@ pytest-watch = "^4.2.0"
 safety = "^3.2.8"
 checkov = "^3.2.257"
 jinja2 = "^3.1.4"
+django-stubs = ">=4.2.4,<6"
+pytest-cov = "^4.1.0"
 mypy = "^1.11.2"
 
 [tool.mypy]
