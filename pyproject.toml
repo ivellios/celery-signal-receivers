@@ -1,60 +1,86 @@
-[tool.poetry]
+[project]
 name = "celery-signal-receivers"
 version = "0.2.1"
 description = "Extension for the Django signal receivers to process them asynchronously as the Celery tasks."
-authors = ["Janusz Kamieński <200957+ivellios@users.noreply.github.com>"]
-license = "MIT"
+authors = [{ name = "Janusz Kamieński", email = "200957+ivellios@users.noreply.github.com" }]
+requires-python = ">=3.11,<4"
 readme = "README.md"
-homepage = "https://github.com/ivellios/celery-signal-receivers"
-repository = "https://github.com/ivellios/celery-signal-receivers"
-keywords = ["django", "signals", "celery"]
+license = "MIT"
+keywords = [
+    "django",
+    "signals",
+    "celery",
+]
 classifiers = [
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Framework :: Django :: 4.0",
-    "Framework :: Django :: 4.1",
-    "Framework :: Django :: 4.2",
-    "Framework :: Django :: 5.0",
-    "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
     "Framework :: Celery",
 ]
-packages = [
-    { include = "celery_signals", from = "src" }
+dependencies = [
+    "Django>=5.2,<7.0",
+    "celery>=5.3,<6",
+    "django-unified-signals>=0.2.1,<0.3",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-Django = ">=4.0,<6"
-celery = "^5.3"
-setuptools = "^75.1.0"
-django-unified-signals = "^0.2.1"
+[project.urls]
+Homepage = "https://github.com/ivellios/celery-signal-receivers"
+Repository = "https://github.com/ivellios/celery-signal-receivers"
 
-[tool.poetry.group.dev.dependencies]
-black = "^24.8.0"
-ipython = "^8.18.1"
-ipdb = "^0.13.13"
-liccheck = "^0.9.1"
-pytest-django = "^4.5.2"
-pytest-watch = "^4.2.0"
-safety = "^3.2.8"
-checkov = "^3.2.257"
-jinja2 = "^3.1.4"
-django-stubs = ">=4.2.4,<6"
-pytest-cov = "^4.1.0"
-mypy = "^1.11.2"
+[dependency-groups]
+dev = [
+    "django-stubs>=5.2,<7.0",
+    "ipdb>=0.13.13",
+    "ipython>=9.15.0",
+    "jinja2>=3.1.6",
+    "liccheck>=0.9.2",
+    "mypy>=2.3.0",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.12.0,<5",
+    "pytest-watch>=4.2.0",
+    "python-semantic-release>=10.6.1",
+    "ruff>=0.15.22",
+    "safety>=3.8.1",
+]
+
+[tool.uv]
+default-groups = "all"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/celery_signals"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/celery_signals"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/celery_signals" = "celery_signals"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
 
 [tool.mypy]
 plugins = [
     "mypy_django_plugin.main"
 ]
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "unified_signals.*"]
+ignore_missing_imports = true
 
 [tool.django-stubs]
 django_settings_module = "tests.testapp.settings"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
