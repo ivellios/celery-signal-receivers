@@ -11,21 +11,21 @@ from unified_signals import UnifiedSignal
 def get_celery_app():
     try:
         app_path: str = settings.EVENT_SIGNALS_CELERY_APP
-    except AttributeError:
+    except AttributeError as err:
         raise ImproperlyConfigured(
             "EVENT_SIGNALS_CELERY_APP setting is not defined. "
             "This should point to the celery app object "
             "in the module (e.g. project.celery.app)"
-        )
+        ) from err
     else:
         try:
             module, app_name = app_path.rsplit(".", 1)
-        except ValueError:
+        except ValueError as err:
             raise ImproperlyConfigured(
                 "EVENT_SIGNALS_CELERY_APP should point "
                 "to the celery app object in the module "
                 "(e.g. project.celery.app)"
-            )
+            ) from err
         return getattr(importlib.import_module(module), app_name)
 
 
@@ -34,17 +34,17 @@ app = get_celery_app()
 
 def receiver_task(
     signal: UnifiedSignal,
-    celery_task_options: typing.Optional[typing.Dict] = None,
+    celery_task_options: dict | None = None,
     **options,
 ):
     if celery_task_options is None:
-        celery_task_options = dict()
+        celery_task_options = {}
 
     def decorator(func):
         @wraps(func)
         def consumer_function(message_data: str = "{}", *args, **kwargs):
             message = signal.message_class(**json.loads(message_data))
-            return func(sender=None, message=message, *args, **kwargs)
+            return func(*args, sender=None, message=message, **kwargs)
 
         consumer = app.task(**celery_task_options)(consumer_function)
         app.register_task(consumer)
@@ -52,7 +52,7 @@ def receiver_task(
         def producer(
             signal=signal,
             sender=None,
-            message: typing.Optional[typing.Any] = None,
+            message: typing.Any | None = None,
             *_args,
             **_kwargs,
         ):
