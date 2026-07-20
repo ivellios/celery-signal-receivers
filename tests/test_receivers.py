@@ -20,19 +20,23 @@ class SenderMock:
 
 
 @override_settings(
-    CELERY_TASK_ALWAYS_EAGER=True, EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app"
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
 )
 def test_celery_signal_receiver():
     signal = UnifiedSignal(DataMock)
 
     @receiver_task(signal, weak=False)
-    def handle_signal(**kwargs): ...
+    def handle_signal_basic(**kwargs): ...
 
     signal.send(SenderMock(), DataMock(field=10))
 
 
 @override_settings(
-    CELERY_TASK_ALWAYS_EAGER=True, EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app"
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
 )
 def test_celery_signal_receiver_creates_celery_task():
     signal = UnifiedSignal(DataMock)
@@ -40,24 +44,161 @@ def test_celery_signal_receiver_creates_celery_task():
     with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
 
         @receiver_task(signal, weak=False)
-        def handle_signal(**kwargs): ...
+        def handle_signal_creates_task(**kwargs): ...
 
         signal.send(SenderMock(), DataMock(field=10))
         task_mock.assert_called_once()
 
 
 @override_settings(
-    CELERY_TASK_ALWAYS_EAGER=True, EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app"
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
 )
 def test_celery_signal_receiver_consumer_runs_receiver_function():
     signal = UnifiedSignal(DataMock)
 
     @receiver_task(signal, weak=False)
-    def handle_signal(sender, message, **kwargs):
+    def handle_signal_runs_function(sender, message, **kwargs):
         assert message.field == 10
         assert message.__class__ == DataMock
 
     signal.send(SenderMock(), DataMock(field=10))
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_celery_signal_receiver_fires_without_explicit_weak_option():
+    signal = UnifiedSignal(DataMock)
+    calls = []
+
+    @receiver_task(signal)
+    def handle_signal_no_weak_option(sender, message, **kwargs):
+        calls.append(message)
+
+    signal.send(SenderMock(), DataMock(field=10))
+
+    assert calls == [DataMock(field=10)]
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_celery_signal_receiver_applies_celery_task_options():
+    signal = UnifiedSignal(DataMock)
+
+    with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
+
+        @receiver_task(
+            signal, celery_task_options={"queue": "profile-updated-queue"}, weak=False
+        )
+        def handle_signal_with_task_options(**kwargs): ...
+
+        registered_task = task_mock.call_args.args[0]
+        assert registered_task.queue == "profile-updated-queue"
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_celery_signal_receiver_dispatch_uid_prevents_duplicate_registration():
+    signal = UnifiedSignal(DataMock)
+    calls = []
+
+    def make_receiver():
+        @receiver_task(signal, dispatch_uid="handle_signal_dispatch_uid", weak=False)
+        def handle_signal_dispatch_uid(sender, message, **kwargs):
+            calls.append(message)
+
+        return handle_signal_dispatch_uid
+
+    make_receiver()
+    make_receiver()
+
+    signal.send(SenderMock(), DataMock(field=10))
+
+    assert len(calls) == 1
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_celery_signal_receiver_without_dispatch_uid_allows_duplicate_registration():
+    signal = UnifiedSignal(DataMock)
+    calls = []
+
+    def make_receiver():
+        @receiver_task(signal, weak=False)
+        def handle_signal_no_dispatch_uid(sender, message, **kwargs):
+            calls.append(message)
+
+        return handle_signal_no_dispatch_uid
+
+    make_receiver()
+    make_receiver()
+
+    signal.send(SenderMock(), DataMock(field=10))
+
+    assert len(calls) == 2
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_celery_signal_receiver_always_receives_sender_none():
+    signal = UnifiedSignal(DataMock)
+    received_senders = []
+
+    @receiver_task(signal, weak=False)
+    def handle_signal_sender_none(sender, message, **kwargs):
+        received_senders.append(sender)
+
+    signal.send(SenderMock(), DataMock(field=10))
+
+    assert received_senders == [None]
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_celery_signal_receiver_threads_extra_kwargs_to_handler():
+    signal = UnifiedSignal(DataMock)
+    received_kwargs = []
+
+    @receiver_task(signal, weak=False)
+    def handle_signal_extra_kwargs(sender, message, **kwargs):
+        received_kwargs.append(kwargs)
+
+    signal.send(SenderMock(), DataMock(field=10), extra="value")
+
+    assert received_kwargs[0].get("extra") == "value"
+
+
+def test_registered_task_raises_on_malformed_message_payload():
+    signal = UnifiedSignal(DataMock)
+
+    with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
+
+        @receiver_task(signal, weak=False)
+        def handle_signal_malformed_payload(**kwargs): ...
+
+        registered_task = task_mock.call_args.args[0]
+
+    with pytest.raises(TypeError):
+        registered_task('{"unexpected_field": 1}')
 
 
 def test_receivers_import_without_celery_app_defined():
@@ -75,6 +216,26 @@ def test_receivers_import_with_celery_app_defined_incorrectly():
     settings.EVENT_SIGNALS_CELERY_APP = "bad_import"
 
     with pytest.raises(ImproperlyConfigured):
+        get_celery_app()
+
+    settings.EVENT_SIGNALS_CELERY_APP = OLD_EVENT_SIGNALS_CELERY_APP
+
+
+def test_receivers_import_with_nonexistent_module():
+    OLD_EVENT_SIGNALS_CELERY_APP = settings.EVENT_SIGNALS_CELERY_APP
+    settings.EVENT_SIGNALS_CELERY_APP = "nonexistent.module.app"
+
+    with pytest.raises(ModuleNotFoundError):
+        get_celery_app()
+
+    settings.EVENT_SIGNALS_CELERY_APP = OLD_EVENT_SIGNALS_CELERY_APP
+
+
+def test_receivers_import_with_nonexistent_attribute_on_existing_module():
+    OLD_EVENT_SIGNALS_CELERY_APP = settings.EVENT_SIGNALS_CELERY_APP
+    settings.EVENT_SIGNALS_CELERY_APP = "tests.testapp.celery.nonexistent_attr"
+
+    with pytest.raises(AttributeError):
         get_celery_app()
 
     settings.EVENT_SIGNALS_CELERY_APP = OLD_EVENT_SIGNALS_CELERY_APP
