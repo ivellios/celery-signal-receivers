@@ -1,5 +1,8 @@
 # Celery Signal Receivers
 
+[![Continuous Integration](https://github.com/ivellios/celery-signal-receivers/actions/workflows/ci.yaml/badge.svg)](https://github.com/ivellios/celery-signal-receivers/actions/workflows/ci.yaml)
+[![codecov](https://codecov.io/gh/ivellios/celery-signal-receivers/branch/master/graph/badge.svg)](https://codecov.io/gh/ivellios/celery-signal-receivers)
+
 Make Django signals asynchronous with Celery tasks. This package allows you to convert and write signal receivers to run in the background as Celery tasks.
 
 # Installation
@@ -89,3 +92,18 @@ def foo(sender, message: ProfileMessage, **kwargs):
 For now this package does not support multiple signals passed to the `@receiver_task` decorator. 
 You should create separate receivers for each signal.
 This may be added in the future. 
+
+# Contributing
+
+Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, etc.) —
+enforced locally via `pre-commit install` (installs both the `pre-commit` and `commit-msg` hooks).
+They drive automated version bumps and changelog generation via
+[python-semantic-release](https://python-semantic-release.readthedocs.io/).
+
+# Releasing
+
+Run the `Release` workflow manually from the Actions tab (targets `master`) whenever the changes
+on `master` are ready to ship. It computes the next version from commit history, bumps
+`pyproject.toml`, updates `CHANGELOG.md`, tags the commit, and publishes a GitHub Release.
+Publishing to PyPI is still done manually.
+
