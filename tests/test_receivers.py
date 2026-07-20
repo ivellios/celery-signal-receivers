@@ -112,15 +112,20 @@ def test_celery_signal_receiver_dispatch_uid_prevents_duplicate_registration():
     signal = UnifiedSignal(DataMock)
     calls = []
 
-    def make_receiver():
-        @receiver_task(signal, dispatch_uid="handle_signal_dispatch_uid", weak=False)
-        def handle_signal_dispatch_uid(sender, message, **kwargs):
+    def make_receiver(name):
+        @receiver_task(
+            signal,
+            dispatch_uid="handle_signal_dispatch_uid",
+            celery_task_options={"name": f"tests.test_receivers.{name}"},
+            weak=False,
+        )
+        def handler(sender, message, **kwargs):
             calls.append(message)
 
-        return handle_signal_dispatch_uid
+        return handler
 
-    make_receiver()
-    make_receiver()
+    make_receiver("dispatch_uid_receiver_a")
+    make_receiver("dispatch_uid_receiver_b")
 
     signal.send(SenderMock(), DataMock(field=10))
 
@@ -136,15 +141,19 @@ def test_celery_signal_receiver_without_dispatch_uid_allows_duplicate_registrati
     signal = UnifiedSignal(DataMock)
     calls = []
 
-    def make_receiver():
-        @receiver_task(signal, weak=False)
-        def handle_signal_no_dispatch_uid(sender, message, **kwargs):
+    def make_receiver(name):
+        @receiver_task(
+            signal,
+            celery_task_options={"name": f"tests.test_receivers.{name}"},
+            weak=False,
+        )
+        def handler(sender, message, **kwargs):
             calls.append(message)
 
-        return handle_signal_no_dispatch_uid
+        return handler
 
-    make_receiver()
-    make_receiver()
+    make_receiver("no_dispatch_uid_receiver_a")
+    make_receiver("no_dispatch_uid_receiver_b")
 
     signal.send(SenderMock(), DataMock(field=10))
 
@@ -185,6 +194,33 @@ def test_celery_signal_receiver_threads_extra_kwargs_to_handler():
     signal.send(SenderMock(), DataMock(field=10), extra="value")
 
     assert received_kwargs[0].get("extra") == "value"
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_receiver_task_raises_on_celery_task_name_collision():
+    signal_a = UnifiedSignal(DataMock)
+    signal_b = UnifiedSignal(DataMock)
+
+    @receiver_task(signal_a, weak=False)
+    def handle_signal_collision(**kwargs): ...
+
+    with pytest.raises(ImproperlyConfigured):
+
+        @receiver_task(signal_b, weak=False)
+        def handle_signal_collision(**kwargs): ...  # noqa: F811
+
+
+def test_receiver_task_rejects_list_of_signals():
+    signal = UnifiedSignal(DataMock)
+
+    with pytest.raises(TypeError):
+
+        @receiver_task([signal], weak=False)
+        def handle_signal_list(**kwargs): ...
 
 
 def test_registered_task_raises_on_malformed_message_payload():
