@@ -1,6 +1,6 @@
 [project]
 name = "celery-signal-receivers"
-version = "0.2.1"
+version = "0.3.0"
 description = "Extension for the Django signal receivers to process them asynchronously as the Celery tasks."
 authors = [{ name = "Janusz Kamieński", email = "200957+ivellios@users.noreply.github.com" }]
 requires-python = ">=3.11,<4"
