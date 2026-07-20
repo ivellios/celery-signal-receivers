@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 from unittest import mock
 
 import pytest
@@ -221,6 +222,27 @@ def test_receiver_task_rejects_list_of_signals():
 
         @receiver_task([signal], weak=False)
         def handle_signal_list(**kwargs): ...
+
+
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_signal_send_raises_on_non_json_serializable_message_field():
+    @dataclasses.dataclass
+    class TimestampedMessage:
+        created_at: datetime.datetime
+
+    signal = UnifiedSignal(TimestampedMessage)
+
+    @receiver_task(signal, weak=False)
+    def handle_signal_timestamp(**kwargs): ...
+
+    with pytest.raises(TypeError):
+        signal.send(
+            SenderMock(), TimestampedMessage(created_at=datetime.datetime.now())
+        )
 
 
 def test_registered_task_raises_on_malformed_message_payload():
