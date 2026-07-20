@@ -59,6 +59,7 @@ def receiver_task(
             message_data = json.dumps(message.__dict__) if message else "{}"
             return consumer.delay(message_data, *_args, **_kwargs)
 
+        options.setdefault("weak", False)
         signal.connect(producer, **options)
 
         return func
