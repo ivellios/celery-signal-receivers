@@ -50,6 +50,26 @@ def test_celery_signal_receiver_creates_celery_task():
     signal.send(SenderMock(), DataMock(field=10))
 
 
+def test_registered_task_run_does_not_leak_receiver_signature():
+    signal = UnifiedSignal(DataMock)
+
+    @receiver_task(signal, weak=False)
+    def handle_signal_no_wrapped_leak(sender, message, **kwargs): ...
+
+    task_name = (
+        f"{handle_signal_no_wrapped_leak.__module__}.handle_signal_no_wrapped_leak"
+    )
+    registered_task = app.tasks[task_name]
+
+    # If consumer_function were wrapped via functools.wraps(func), it would carry
+    # __wrapped__, and Celery's own argument-checking follows __wrapped__ via
+    # inspect.signature() on Python 3.14+, validating calls against the receiver's
+    # signature (sender, message, **kwargs) instead of the task's real one
+    # (message_data="{}", **kwargs) - breaking every call. Guard against that
+    # regardless of which Python version runs this test.
+    assert not hasattr(registered_task.run, "__wrapped__")
+
+
 @override_settings(
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,
