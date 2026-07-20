@@ -56,7 +56,7 @@ profile_updated_signal = UnifiedSignal(ProfileMessage)
 See the [documentation of Django Unified Signals](https://pypi.org/project/django-unified-signals/) to learn more about sending the signal
 with standardized message.
 
-Let's now write receiver for the signal. We will use the `celery_signal_receivers.receiver` decorator to convert the receiver to Celery task.
+Let's now write receiver for the signal. We will use the `celery_signals.receiver_task` decorator to convert the receiver to Celery task.
 
 ```python
 from celery_signals import receiver_task
@@ -106,6 +106,11 @@ dynamically (e.g. in a loop or factory helper) and two of them end up with the s
 in the same module, `receiver_task` raises `ImproperlyConfigured` rather than silently letting one
 receiver's task overwrite the other's - pass an explicit unique `name` via `celery_task_options` to
 disambiguate in that case.
+
+`receiver_task` returns the original, undecorated function unchanged. Calling it directly (e.g.
+`handle_profile_updated(sender, message=...)`) runs it synchronously and skips Celery entirely, so
+only `signal.send(...)` (or invoking the registered Celery task directly) goes through the async,
+JSON-round-tripped path.
 
 # Contributing
 
