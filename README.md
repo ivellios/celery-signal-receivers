@@ -37,6 +37,14 @@ class ProfileMessage:
     name: str
 ```
 
+The message is serialized to JSON before being handed to the Celery task, so every field on the
+message class must be JSON-serializable via the standard library `json` module - plain
+dataclasses of `str`/`int`/`float`/`bool`/`None`/lists/dicts work, but `datetime`, `Decimal`,
+`UUID`, etc. don't and will raise a `TypeError` when the signal is sent. Convert such fields to a
+JSON-friendly representation (e.g. `datetime.isoformat()`) before constructing the message.
+Stick to plain `@dataclasses.dataclass` message classes - classes with `__slots__` or a custom
+`__init__` that doesn't mirror `__dict__` aren't supported.
+
 Now that we have the message structure defined, we can create the signal. We will use `UnifiedSignal` class for that:
 
 ```python
@@ -89,9 +97,15 @@ def foo(sender, message: ProfileMessage, **kwargs):
 
 # Limitations
 
-For now this package does not support multiple signals passed to the `@receiver_task` decorator. 
-You should create separate receivers for each signal.
-This may be added in the future. 
+For now this package does not support multiple signals passed to the `@receiver_task` decorator
+(passing a list/tuple raises a `TypeError`). You should create separate receivers for each signal.
+This may be added in the future.
+
+Celery names tasks after the decorated function's module and name. If you generate receivers
+dynamically (e.g. in a loop or factory helper) and two of them end up with the same function name
+in the same module, `receiver_task` raises `ImproperlyConfigured` rather than silently letting one
+receiver's task overwrite the other's - pass an explicit unique `name` via `celery_task_options` to
+disambiguate in that case.
 
 # Contributing
 
