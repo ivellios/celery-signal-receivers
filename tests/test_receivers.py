@@ -1,6 +1,5 @@
 import dataclasses
 import datetime
-from unittest import mock
 
 import pytest
 from django.conf import settings
@@ -8,7 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 from unified_signals import UnifiedSignal
 
-from celery_signals.receivers import get_celery_app, receiver_task
+from celery_signals.receivers import app, get_celery_app, receiver_task
 
 
 @dataclasses.dataclass
@@ -42,13 +41,13 @@ def test_celery_signal_receiver():
 def test_celery_signal_receiver_creates_celery_task():
     signal = UnifiedSignal(DataMock)
 
-    with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
+    @receiver_task(signal, weak=False)
+    def handle_signal_creates_task(**kwargs): ...
 
-        @receiver_task(signal, weak=False)
-        def handle_signal_creates_task(**kwargs): ...
+    task_name = f"{handle_signal_creates_task.__module__}.handle_signal_creates_task"
+    assert task_name in app.tasks
 
-        signal.send(SenderMock(), DataMock(field=10))
-        task_mock.assert_called_once()
+    signal.send(SenderMock(), DataMock(field=10))
 
 
 @override_settings(
@@ -93,15 +92,16 @@ def test_celery_signal_receiver_fires_without_explicit_weak_option():
 def test_celery_signal_receiver_applies_celery_task_options():
     signal = UnifiedSignal(DataMock)
 
-    with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
+    @receiver_task(
+        signal, celery_task_options={"queue": "profile-updated-queue"}, weak=False
+    )
+    def handle_signal_with_task_options(**kwargs): ...
 
-        @receiver_task(
-            signal, celery_task_options={"queue": "profile-updated-queue"}, weak=False
-        )
-        def handle_signal_with_task_options(**kwargs): ...
-
-        registered_task = task_mock.call_args.args[0]
-        assert registered_task.queue == "profile-updated-queue"
+    task_name = (
+        f"{handle_signal_with_task_options.__module__}.handle_signal_with_task_options"
+    )
+    registered_task = app.tasks[task_name]
+    assert registered_task.queue == "profile-updated-queue"
 
 
 @override_settings(
@@ -248,12 +248,13 @@ def test_signal_send_raises_on_non_json_serializable_message_field():
 def test_registered_task_raises_on_malformed_message_payload():
     signal = UnifiedSignal(DataMock)
 
-    with mock.patch("tests.testapp.celery.app.register_task") as task_mock:
+    @receiver_task(signal, weak=False)
+    def handle_signal_malformed_payload(**kwargs): ...
 
-        @receiver_task(signal, weak=False)
-        def handle_signal_malformed_payload(**kwargs): ...
-
-        registered_task = task_mock.call_args.args[0]
+    task_name = (
+        f"{handle_signal_malformed_payload.__module__}.handle_signal_malformed_payload"
+    )
+    registered_task = app.tasks[task_name]
 
     with pytest.raises(TypeError):
         registered_task('{"unexpected_field": 1}')
