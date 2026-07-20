@@ -72,7 +72,7 @@ def receiver_task(
             message: typing.Any | None = None,
             **_kwargs,
         ):
-            message_data = json.dumps(message.__dict__) if message else "{}"
+            message_data = json.dumps(message.__dict__) if message is not None else "{}"
             return consumer.delay(message_data, **_kwargs)
 
         options.setdefault("weak", False)
