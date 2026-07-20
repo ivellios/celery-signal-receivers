@@ -265,6 +265,31 @@ def test_signal_send_raises_on_non_json_serializable_message_field():
         )
 
 
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+    EVENT_SIGNALS_CELERY_APP="tests.testapp.celery.app",
+)
+def test_celery_signal_receiver_delivers_falsy_message():
+    @dataclasses.dataclass
+    class FalsyMessage:
+        items: list
+
+        def __bool__(self):
+            return bool(self.items)
+
+    signal = UnifiedSignal(FalsyMessage)
+    received = []
+
+    @receiver_task(signal, weak=False)
+    def handle_signal_falsy_message(sender, message, **kwargs):
+        received.append(message)
+
+    signal.send(SenderMock(), FalsyMessage(items=[]))
+
+    assert received == [FalsyMessage(items=[])]
+
+
 def test_registered_task_raises_on_malformed_message_payload():
     signal = UnifiedSignal(DataMock)
 
