@@ -2,6 +2,72 @@
 
 <!-- version list -->
 
+## v0.4.0 (2026-07-20)
+
+### Bug Fixes
+
+- Default signal.connect to weak=False to prevent silent no-op receivers
+  ([`e0aaff1`](https://github.com/ivellios/celery-signal-receivers/commit/e0aaff1b081387a2df0257c85af8a9d8353f97db))
+
+- Drop redundant task registration and Python 3.14 signature mismatch
+  ([`5b67001`](https://github.com/ivellios/celery-signal-receivers/commit/5b67001a0c69cd9f341fcf25a8f9c4a759de8e51))
+
+- Use explicit is-not-None check for message in producer
+  ([`922b18f`](https://github.com/ivellios/celery-signal-receivers/commit/922b18f38f3c9b86dec55646c91c43bfdbc6c37a))
+
+- Validate receiver_task input and detect Celery task name collisions
+  ([`0859ffc`](https://github.com/ivellios/celery-signal-receivers/commit/0859ffcbf9ce15dcb7f5665e2dcb560088f66351))
+
+### Chores
+
+- Fix stale test fixture leftovers
+  ([`e2c084a`](https://github.com/ivellios/celery-signal-receivers/commit/e2c084ab6674993d3791ef6eb38c470bd8121200))
+
+- Remove stray .github/tests/ leftover testing unified_signals directly
+  ([`6e0d5de`](https://github.com/ivellios/celery-signal-receivers/commit/6e0d5de614e64e9029fe2743a92e3a40d46f90a7))
+
+- Sync uv.lock version
+  ([`9af4b82`](https://github.com/ivellios/celery-signal-receivers/commit/9af4b8214218bdfe05f1dce96b426ecb8c9580d2))
+
+### Continuous Integration
+
+- Add Python 3.14 to CI and tox test matrix
+  ([`c35c2f1`](https://github.com/ivellios/celery-signal-receivers/commit/c35c2f11b69c5c3cc3b2a4739b56386f3dc85af4))
+
+### Documentation
+
+- Add CI/coverage badges and Contributing/Releasing sections to README
+  ([`2752b65`](https://github.com/ivellios/celery-signal-receivers/commit/2752b65ba18b67f0aedaea3b6aea2ba391e85ec6))
+
+- Document message JSON-serialization requirement and task-name collision gotcha
+  ([`d693257`](https://github.com/ivellios/celery-signal-receivers/commit/d693257d73463c881f21286d1e552b41fede311f))
+
+- Fix decorator import path typo, document direct-call gotcha
+  ([`6120f25`](https://github.com/ivellios/celery-signal-receivers/commit/6120f259eb0b378d56a1305f676a9fe4de705347))
+
+### Features
+
+- Add PyPI/TestPyPI publish workflows
+  ([`d80de78`](https://github.com/ivellios/celery-signal-receivers/commit/d80de78d06b173f1aa382c4e66433b14cf46feb5))
+
+- Upload coverage report to Codecov in CI
+  ([`1a2296e`](https://github.com/ivellios/celery-signal-receivers/commit/1a2296e4798133ac732e22331dab862fc5b98442))
+
+### Testing
+
+- Cover celery_task_options, dispatch_uid, and error paths in receiver_task
+  ([`6cd4af6`](https://github.com/ivellios/celery-signal-receivers/commit/6cd4af614aa9866f6e51256a64bc274918b08100))
+
+- Cover malformed non-JSON message payload
+  ([`6c4883f`](https://github.com/ivellios/celery-signal-receivers/commit/6c4883f4b7de1f4600b642d23a27a1168539f168))
+
+- Cover non-JSON-serializable message field validation
+  ([`b2b8f7e`](https://github.com/ivellios/celery-signal-receivers/commit/b2b8f7eba99ed10f7099623e70f16a57f557f0fb))
+
+- Lock in that registered task run doesn't leak receiver signature
+  ([`6d9b3f2`](https://github.com/ivellios/celery-signal-receivers/commit/6d9b3f2579393bc6f322f5f5d7570224a2582405))
+
+
 ## v0.3.0 (2026-07-20)
 
 ### Bug Fixes
