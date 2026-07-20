@@ -40,6 +40,13 @@ def receiver_task(
     if celery_task_options is None:
         celery_task_options = {}
 
+    if not isinstance(signal, UnifiedSignal):
+        raise TypeError(
+            "receiver_task() requires a single UnifiedSignal instance, not "
+            f"{signal!r}. Multiple signals are not supported - create a "
+            "separate receiver for each signal."
+        )
+
     def decorator(func):
         @wraps(func)
         def consumer_function(message_data: str = "{}", *args, **kwargs):
@@ -47,6 +54,14 @@ def receiver_task(
             return func(*args, sender=None, message=message, **kwargs)
 
         consumer = app.task(**celery_task_options)(consumer_function)
+        if consumer.run is not consumer_function:
+            raise ImproperlyConfigured(
+                f"Celery task name {consumer.name!r} is already registered to "
+                "a different receiver. This happens when two receiver_task-"
+                "decorated functions share the same __name__ in the same "
+                "module (e.g. generated via a factory/loop pattern). Pass an "
+                "explicit unique `name` via celery_task_options to disambiguate."
+            )
         app.register_task(consumer)
 
         def producer(
